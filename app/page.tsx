@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNowStore } from '@/zustand/now';
 import { useHistoryStore } from '@/zustand/history';
-import { getBestMove, AiDecision } from '@/ai/solver';
+import { getBestMoveDetails, AiDecision } from '@/utils/aiSolver';
 
 // shadcn/ui importlari
 import { Button } from "@/components/ui/button";
@@ -39,13 +39,14 @@ export default function GamePage() {
   const [isAiPlaying, setIsAiPlaying] = useState(false);
   const [aiLog, setAiLog] = useState<AiDecision | null>(null);
 
-  // AI sikli (550ms vazmin tezlikda)
+  // AI sikli (250ms daho tezligida)
   useEffect(() => {
     let aiInterval: NodeJS.Timeout;
 
     if (isAiPlaying && !isGameOver) {
       aiInterval = setInterval(() => {
-        const decision = getBestMove(board);
+        // To'g'ri fayl va funksiya nomiga moslandi
+        const decision = getBestMoveDetails(board);
         setAiLog(decision);
 
         if (decision.bestMove) {
@@ -58,6 +59,29 @@ export default function GamePage() {
 
     return () => clearInterval(aiInterval);
   }, [isAiPlaying, board, isGameOver, move]);
+
+  // 🔥 KLAVIATURA BOSHQARUVI (Kompyuter va Brauzer barqarorligi uchun)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // O'yin tugaganda yoki AI o'zi o'ynayotganda klaviaturani vaqtincha o'chiramiz
+      if (isGameOver || isAiPlaying) return;
+
+      const keys: Record<string, 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'> = {
+        ArrowUp: 'UP', w: 'UP', W: 'UP',
+        ArrowDown: 'DOWN', s: 'DOWN', S: 'DOWN',
+        ArrowLeft: 'LEFT', a: 'LEFT', A: 'LEFT',
+        ArrowRight: 'RIGHT', d: 'RIGHT', D: 'RIGHT'
+      };
+
+      if (e.key in keys) {
+        e.preventDefault(); // Sahifa yuqori-pastga g'ildrab ketishini to'sadi
+        move(keys[e.key]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [move, isGameOver, isAiPlaying]);
 
   // Yangi o'yin yoki cheat trigger
   const handleNewGameClick = () => {
@@ -80,7 +104,7 @@ export default function GamePage() {
     }
   }, [isGameOver, score, saveToHistory]);
 
-  // Keyboard / Touch Handlers
+  // Mobil qurilmalar uchun Touch hodisalari
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isAiPlaying) return;
     touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -113,7 +137,7 @@ export default function GamePage() {
       1024: `${base} bg-emerald-500 text-white border-emerald-600 shadow-sm`,
       2048: `${base} bg-emerald-600 text-white border-emerald-700 shadow-sm`,
       
-      // 🔥 YANGI REKORDCHI BLOKLAR UCHUN MAXSUS RANGLAR (PORTFOLIO UCHUN DAXSHAT)
+      // Cyberpunk dizayndagi yangi yirik rekordlar uchun ranglar master-klass
       4096: `${base} bg-cyan-500 text-white border-cyan-600 shadow-md shadow-cyan-500/20 animate-pulse`,
       8192: `${base} bg-blue-600 text-white border-blue-700 shadow-md shadow-blue-600/30`,
       16384: `${base} bg-indigo-600 text-white border-indigo-700 shadow-lg shadow-indigo-600/40`,
@@ -121,14 +145,14 @@ export default function GamePage() {
       65536: `${base} bg-pink-600 text-white border-pink-700 shadow-xl shadow-pink-600/50`,
       131072: `${base} bg-slate-950 text-amber-400 border-amber-500 shadow-2xl ring-2 ring-amber-400/50 animate-bounce`
     };
-    return styles[value] || `${base} bg-slate-300/40 text-transparent border-transparent`;
+    return styles[value] || `${base} bg-slate-300/30 text-transparent border-transparent`;
   };
 
   return (
-    // p-2 qilinib ichki padding qisqartirildi, hamma narsa yuqoriga bir oz ko'tariladi
-    <div className="fixed inset-0 w-screen h-screen bg-slate-50 flex flex-col items-center justify-between p-2 font-sans select-none overflow-hidden">
+    // Eng yuqori konteynerdagi touch-none olib tashlandi, elementlar endi to'liq bosiluvchan!
+    <div className="fixed inset-0 w-screen h-screen bg-slate-50 flex flex-col items-center justify-between p-2 font-sans select-none overflow-hidden overscroll-none">
       
-      {/* 1. HEADER SECTION (Yana biroz ixchamroq qilindi) */}
+      {/* 1. HEADER SECTION */}
       <div className="w-full max-w-[320px] flex items-center justify-between mt-0.5">
         <div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tighter">2048</h1>
@@ -145,8 +169,8 @@ export default function GamePage() {
         </Card>
       </div>
 
-      {/* 2. CONTROLS (Tugmalar balandligi h-8 ga tushirildi) */}
-      <div className="mb-7 w-full max-w-[320px] flex gap-2">
+      {/* 2. CONTROLS */}
+      <div className="w-full max-w-[320px] flex gap-2">
         <Button onClick={handleNewGameClick} variant="outline" className="flex-1 h-8 border-2 border-slate-200 rounded-lg font-bold text-[11px] gap-1 hover:bg-slate-100 transition-all">
           <RotateCcw size={12} /> New Game
         </Button>
@@ -189,12 +213,12 @@ export default function GamePage() {
         </Dialog>
       </div>
 
-      {/* 3. GAME BOARD (Maksimal siqilgan o'lcham max-w-[310px]) */}
+      {/* 3. GAME BOARD (Inline style yordamida pointer hodisalari muvozanatlandi) */}
       <div 
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         style={{ touchAction: 'none' }}
-        className="relative w-full max-w-[310px] aspect-square bg-slate-300 rounded-[1.2rem] p-1.5 shadow-md border-2 border-slate-300 ring-2 ring-slate-200/30 overscroll-none touch-none"
+        className="relative w-full max-w-[310px] aspect-square bg-slate-300 rounded-[1.2rem] p-1.5 shadow-md border-2 border-slate-300 ring-2 ring-slate-200/30 overscroll-none"
       >
         <div className="w-full h-full grid grid-cols-4 grid-rows-4 gap-1.5">
           {board.map((row, r) => 
@@ -216,9 +240,8 @@ export default function GamePage() {
         )}
       </div>
 
-      {/* 4. JOYSTIK PANEL (Yana biroz ixchamroq h-28 o'lchamga keltirildi) */}
+      {/* 4. JOYSTIK PANEL */}
       <div className="w-full max-w-[320px] flex items-center justify-center bg-transparent">
-        
         <div className="relative w-28 h-28 flex items-center justify-center bg-slate-100/60 border border-slate-200 rounded-full shadow-inner">
           
           {/* TEPAGA */}
@@ -276,7 +299,7 @@ export default function GamePage() {
         </div>
       </div>
 
-      {/* 5. FOOTER CREDITS (Nihoyat, ekranga to'liq muhrlandi! 🚀) */}
+      {/* 5. FOOTER CREDITS */}
       <div className="text-[9px] text-slate-400 font-bold mb-1 tracking-wider">
         📅 2026 Next.js Edition • Created by <span className="text-slate-600 font-extrabold underline decoration-purple-400">Ozod Tirkachev</span>
       </div>
