@@ -112,8 +112,16 @@ export default function GamePage() {
       512: `${base} bg-yellow-600 text-white border-yellow-700 shadow-sm`,
       1024: `${base} bg-emerald-500 text-white border-emerald-600 shadow-sm`,
       2048: `${base} bg-emerald-600 text-white border-emerald-700 shadow-sm`,
+      
+      // 🔥 YANGI REKORDCHI BLOKLAR UCHUN MAXSUS RANGLAR (PORTFOLIO UCHUN DAXSHAT)
+      4096: `${base} bg-cyan-500 text-white border-cyan-600 shadow-md shadow-cyan-500/20 animate-pulse`,
+      8192: `${base} bg-blue-600 text-white border-blue-700 shadow-md shadow-blue-600/30`,
+      16384: `${base} bg-indigo-600 text-white border-indigo-700 shadow-lg shadow-indigo-600/40`,
+      32768: `${base} bg-purple-600 text-white border-purple-700 shadow-lg shadow-purple-600/40`,
+      65536: `${base} bg-pink-600 text-white border-pink-700 shadow-xl shadow-pink-600/50`,
+      131072: `${base} bg-slate-950 text-amber-400 border-amber-500 shadow-2xl ring-2 ring-amber-400/50 animate-bounce`
     };
-    return styles[value] || `${base} bg-slate-300/30 text-transparent border-transparent`;
+    return styles[value] || `${base} bg-slate-300/40 text-transparent border-transparent`;
   };
 
   return (
