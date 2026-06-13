@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNowStore } from '@/zustand/now';
 import { useHistoryStore } from '@/zustand/history';
-import { getBestMoveDetails, AiDecision } from '@/utils/aiSolver';
+import { getBestMove, AiDecision } from '@/ai/solver';
 
 // shadcn/ui importlari
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,7 @@ export default function GamePage() {
     if (isAiPlaying && !isGameOver) {
       aiInterval = setInterval(() => {
         // To'g'ri fayl va funksiya nomiga moslandi
-        const decision = getBestMoveDetails(board);
+        const decision = getBestMove(board);
         setAiLog(decision);
 
         if (decision.bestMove) {
